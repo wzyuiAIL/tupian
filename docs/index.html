@@ -283,6 +283,45 @@
         .loading-detail {
             color: #666;
         }
+
+        .progress-shell {
+            width: 100%;
+            max-width: 520px;
+            height: 12px;
+            margin: 18px auto 10px;
+            background: #e5e7ff;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #27ae60 100%);
+            transition: width 0.35s ease;
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 6px;
+        }
+
+        .export-controls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .export-selected {
+            color: #27ae60;
+            font-size: 0.9em;
+            margin-top: 6px;
+        }
         
         .detection-result {
             background: #f8f9ff;
@@ -528,12 +567,16 @@
             </div>
         </div>
 
-        <!-- 导出路径 -->
+        <!-- 本地导出 -->
         <div class="section">
-            <h2>导出路径（可选）</h2>
+            <h2>本地导出（可选）</h2>
             <div class="input-group">
-                <input type="text" id="exportPath" placeholder="/tmp/product_images_export">
-                <span class="input-hint">留空则不导出，仅返回URL</span>
+                <div class="export-controls">
+                    <input type="text" id="exportPath" placeholder="未选择本地导出文件夹" readonly>
+                    <button class="btn btn-secondary" type="button" onclick="chooseExportFolder()">📁 选择文件夹</button>
+                </div>
+                <span class="input-hint">生成后可一键保存到本地文件夹；不选择也可以逐张下载</span>
+                <div class="export-selected" id="exportSelected" style="display: none;"></div>
             </div>
         </div>
 
@@ -555,6 +598,13 @@
             <div class="spinner"></div>
             <p class="loading-text">正在生成图片，请稍候...</p>
             <p class="loading-detail" id="loadingDetail">正在处理图片...</p>
+            <div class="progress-shell">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-meta">
+                <span id="progressPercent">0%</span>
+                <span id="progressElapsed">耗时 0 秒</span>
+            </div>
         </div>
 
         <!-- 检测结果 -->
@@ -602,6 +652,11 @@
             file1: null,
             file2: null
         };
+
+        let selectedDirectoryHandle = null;
+        let generatedImages = [];
+        let progressTimer = null;
+        let progressStartedAt = 0;
 
         // API配置检查
         function checkApiConfig() {
@@ -656,11 +711,56 @@
             });
         }
 
+        async function chooseExportFolder() {
+            if (!window.showDirectoryPicker) {
+                showMessage('当前浏览器不支持选择本地文件夹，请使用最新版 Chrome 或 Edge。', 'error');
+                return;
+            }
+
+            try {
+                selectedDirectoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                document.getElementById('exportPath').value = selectedDirectoryHandle.name;
+                const selected = document.getElementById('exportSelected');
+                selected.textContent = `已选择本地导出文件夹：${selectedDirectoryHandle.name}`;
+                selected.style.display = 'block';
+                showMessage('已选择本地导出文件夹，生成后可一键保存。', 'success');
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    showMessage(`选择文件夹失败：${error.message}`, 'error');
+                }
+            }
+        }
+
+        function setProgress(percent, detail) {
+            const next = Math.max(0, Math.min(100, Math.round(percent)));
+            document.getElementById('progressBar').style.width = `${next}%`;
+            document.getElementById('progressPercent').textContent = `${next}%`;
+            if (detail) {
+                updateLoadingDetail(detail);
+            }
+        }
+
+        function startProgressTimer() {
+            stopProgressTimer();
+            progressStartedAt = Date.now();
+            document.getElementById('progressElapsed').textContent = '耗时 0 秒';
+            progressTimer = setInterval(() => {
+                const seconds = Math.floor((Date.now() - progressStartedAt) / 1000);
+                document.getElementById('progressElapsed').textContent = `耗时 ${seconds} 秒`;
+            }, 1000);
+        }
+
+        function stopProgressTimer() {
+            if (progressTimer) {
+                clearInterval(progressTimer);
+                progressTimer = null;
+            }
+        }
+
         // 生成图片
         async function generateImages() {
             CONFIG.apiUrl = document.getElementById('apiUrl').value;
             const style = document.querySelector('input[name="style"]:checked').value;
-            const exportPath = document.getElementById('exportPath').value;
 
             // 验证
             if (!uploadedFiles.file1 || !uploadedFiles.file2) {
@@ -675,16 +775,20 @@
 
             // 显示加载状态
             document.getElementById('loading').style.display = 'block';
-            updateLoadingDetail('正在转换图片...');
+            setProgress(5, '准备读取本地图片...');
+            startProgressTimer();
             document.getElementById('generateBtn').disabled = true;
+            let generationSucceeded = false;
 
             try {
                 // 将图片转换为base64
-                updateLoadingDetail('正在上传图片...');
+                setProgress(15, '正在转换第 1 张图片...');
                 const base64_1 = await fileToBase64(uploadedFiles.file1);
+                setProgress(28, '正在转换第 2 张图片...');
                 const base64_2 = await fileToBase64(uploadedFiles.file2);
 
                 // 构建请求体
+                setProgress(40, '正在整理请求数据...');
                 const payload = {
                     product_image1: {
                         url: base64_1,
@@ -697,11 +801,7 @@
                     style: style
                 };
 
-                if (exportPath) {
-                    payload.export_path = exportPath;
-                }
-
-                updateLoadingDetail('正在生成图片...');
+                setProgress(50, '已发送到 VPS，正在等待 AI 生成...');
 
                 // 调用API
                 const response = await fetch(CONFIG.apiUrl, {
@@ -717,10 +817,13 @@
                     throw new Error(`API调用失败: ${response.status} - ${errorText}`);
                 }
 
+                setProgress(88, 'AI 已返回结果，正在解析图片...');
                 const result = await response.json();
 
                 // 显示结果
                 displayResults(result);
+                setProgress(100, '生成完成，可以下载或导出图片。');
+                generationSucceeded = true;
                 showMessage('图片生成成功！', 'success');
                 document.getElementById('regenerateBtn').disabled = false;
 
@@ -745,9 +848,15 @@
                     showMessage(`错误: ${error.message}`, 'error');
                 }
 
+                setProgress(0, '生成失败，请查看错误信息。');
                 console.error('生成失败:', error);
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                stopProgressTimer();
+                setTimeout(() => {
+                    if (generationSucceeded || document.getElementById('progressPercent').textContent === '0%') {
+                        document.getElementById('loading').style.display = 'none';
+                    }
+                }, 1200);
                 document.getElementById('generateBtn').disabled = false;
             }
         }
@@ -788,6 +897,8 @@
                 });
             }
 
+            generatedImages = images.filter(img => img.url);
+
             images.forEach(img => {
                 if (img.url) {
                     const card = document.createElement('div');
@@ -824,17 +935,45 @@
             document.body.removeChild(link);
         }
 
+        function sanitizeFilename(name) {
+            return name.replace(/[\\/:*?"<>|]/g, '_');
+        }
+
+        async function saveImageToFolder(url, filename) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`下载失败：${response.status}`);
+            }
+            const blob = await response.blob();
+            const fileHandle = await selectedDirectoryHandle.getFileHandle(sanitizeFilename(filename), { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+        }
+
         // 导出所有图片
-        function exportImages() {
-            const cards = document.querySelectorAll('.result-card');
-            cards.forEach((card, index) => {
-                const img = card.querySelector('img');
-                const name = card.querySelector('.result-tag').textContent;
-                if (img && img.src) {
-                    setTimeout(() => {
-                        downloadImage(img.src, `${name}.jpg`);
-                    }, index * 500);
+        async function exportImages() {
+            if (!generatedImages.length) {
+                showMessage('还没有可导出的图片，请先生成图片。', 'error');
+                return;
+            }
+
+            if (selectedDirectoryHandle && window.showDirectoryPicker) {
+                try {
+                    for (let i = 0; i < generatedImages.length; i++) {
+                        const img = generatedImages[i];
+                        showMessage(`正在保存 ${i + 1}/${generatedImages.length}：${img.name}`, 'success');
+                        await saveImageToFolder(img.url, `${img.name}.jpg`);
+                    }
+                    showMessage(`已保存 ${generatedImages.length} 张图片到本地文件夹。`, 'success');
+                    return;
+                } catch (error) {
+                    showMessage(`保存到本地文件夹失败，已改为浏览器下载：${error.message}`, 'error');
                 }
+            }
+
+            generatedImages.forEach((img, index) => {
+                setTimeout(() => downloadImage(img.url, `${img.name}.jpg`), index * 500);
             });
         }
 
