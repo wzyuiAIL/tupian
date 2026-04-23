@@ -27,7 +27,7 @@ app.add_middleware(
     allow_origins=list(parse_origins(ALLOWED_ORIGINS)),
     allow_credentials=False,
     allow_methods=["POST", "GET", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["*"],
 )
 
 
