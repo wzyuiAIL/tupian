@@ -773,6 +773,76 @@
             }
         }
 
+        function getJobsApiUrl() {
+            const apiUrl = CONFIG.apiUrl || '/coze/run';
+            if (apiUrl.endsWith('/coze/run')) {
+                return apiUrl.replace(/\/coze\/run$/, '/coze/jobs');
+            }
+            if (apiUrl.endsWith('/run')) {
+                return apiUrl.replace(/\/run$/, '/jobs');
+            }
+            return '/coze/jobs';
+        }
+
+        function formatJobMessage(job) {
+            const elapsed = job.elapsed_seconds ? `，已耗时 ${job.elapsed_seconds} 秒` : '';
+            const size = job.request_bytes ? `，请求 ${Math.round(job.request_bytes / 1024)} KB` : '';
+            return `${job.message || job.stage || '处理中'}${elapsed}${size}`;
+        }
+
+        async function submitGenerationJob(payload) {
+            const jobsUrl = getJobsApiUrl();
+            const response = await fetch(jobsUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`创建任务失败: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        }
+
+        async function waitForGenerationJob(job) {
+            const jobsUrl = getJobsApiUrl();
+            let current = job;
+            setProgress(current.percent || 52, formatJobMessage(current));
+
+            while (current.status !== 'succeeded' && current.status !== 'failed') {
+                await new Promise(resolve => setTimeout(resolve, 1800));
+                const response = await fetch(`${jobsUrl}/${current.job_id}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`查询任务失败: ${response.status} - ${errorText}`);
+                }
+
+                current = await response.json();
+                const basePercent = current.percent || 60;
+                const elapsedBoost = Math.min(20, Math.floor((current.elapsed_seconds || 0) / 20));
+                const visualPercent = current.status === 'running'
+                    ? Math.min(85, basePercent + elapsedBoost)
+                    : basePercent;
+                setProgress(visualPercent, formatJobMessage(current));
+            }
+
+            if (current.status === 'failed') {
+                throw new Error(`${current.message || '生成失败'}: ${JSON.stringify(current.error || {})}`);
+            }
+
+            setProgress(90, 'Coze 已返回结果，正在解析图片...');
+            return current.result;
+        }
+
         // 生成图片
         async function generateImages() {
             CONFIG.apiUrl = document.getElementById('apiUrl').value;
@@ -817,24 +887,9 @@
                     style: style
                 };
 
-                setProgress(50, '已发送到 VPS，正在等待 AI 生成...');
-
-                // 调用API
-                const response = await fetch(CONFIG.apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API调用失败: ${response.status} - ${errorText}`);
-                }
-
-                setProgress(88, 'AI 已返回结果，正在解析图片...');
-                const result = await response.json();
+                setProgress(50, '正在提交任务到 VPS...');
+                const job = await submitGenerationJob(payload);
+                const result = await waitForGenerationJob(job);
 
                 // 显示结果
                 displayResults(result);
