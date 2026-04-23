@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产品图片生成器 - CORS版本</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .upload-box {
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-box:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-box.has-image {
+            border-style: solid;
+            border-color: #667eea;
+            padding: 0;
+        }
+
+        .upload-box img {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .upload-box .placeholder {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .upload-box .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .style-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .style-option {
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .style-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .style-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        }
+
+        .style-option .radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .style-option.selected .radio {
+            border-color: #667eea;
+            background: #667eea;
+        }
+
+        .style-option .radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            display: none;
+        }
+
+        .style-option.selected .radio::after {
+            display: block;
+        }
+
+        .style-option .info {
+            flex: 1;
+        }
+
+        .style-option .name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 3px;
+        }
+
+        .style-option .desc {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group .hint {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            flex: 2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .result-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .result-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .result-item .label {
+            padding: 10px;
+            background: #f8f9fa;
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            text-align: center;
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            color: #2f855a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .progress {
+            background: #edf2f7;
+            border-radius: 10px;
+            height: 30px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: #fffaf0;
+            border: 2px solid #f6ad55;
+            color: #c05621;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .upload-grid, .style-options, .results {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 AI产品图片生成器</h1>
+        <p class="subtitle">上传2张产品图片，自动生成10张超高清营销图片</p>
+
+        <div class="info-box">
+            <strong>⚠️ 关于CORS问题的说明：</strong><br>
+            由于浏览器的跨域安全限制，GitHub Pages无法直接调用Coze API。<br>
+            <strong>解决方案：请使用方案2（Python代理服务器）或方案3（Coze平台直接使用）</strong>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📤 上传产品图片</div>
+            <div class="upload-grid">
+                <div class="upload-box" id="upload1" onclick="document.getElementById('file1').click()">
+                    <div class="placeholder">
+                        <div class="icon">📷</div>
+                        <div>点击上传第1张图片</div>
+                    </div>
+                </div>
+                <div class="upload-box" id="upload2" onclick="document.getElementById('file2').click()">
+                    <div class="placeholder">
+                        <div class="icon">📷</div>
+                        <div>点击上传第2张图片</div>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="file1" accept="image/*" style="display: none" onchange="handleFileSelect(event, 'upload1')">
+            <input type="file" id="file2" accept="image/*" style="display: none" onchange="handleFileSelect(event, 'upload2')">
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎨 选择风格</div>
+            <div class="style-options">
+                <div class="style-option selected" data-style="智能自适应" onclick="selectStyle(this)">
+                    <div class="radio"></div>
+                    <div class="info">
+                        <div class="name">🤖 智能自适应</div>
+                        <div class="desc">AI自动分析并选择最佳风格</div>
+                    </div>
+                </div>
+                <div class="style-option" data-style="暖色系" onclick="selectStyle(this)">
+                    <div class="radio"></div>
+                    <div class="info">
+                        <div class="name">🔥 暖色系</div>
+                        <div class="desc">温馨舒适，Z世代最爱</div>
+                    </div>
+                </div>
+                <div class="style-option" data-style="冷色系" onclick="selectStyle(this)">
+                    <div class="radio"></div>
+                    <div class="info">
+                        <div class="name">❄️ 冷色系</div>
+                        <div class="desc">现代清新，高级冷淡风</div>
+                    </div>
+                </div>
+                <div class="style-option" data-style="中性色" onclick="selectStyle(this)">
+                    <div class="radio"></div>
+                    <div class="info">
+                        <div class="name">⚪ 中性色</div>
+                        <div class="desc">高端百搭，极简专业</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">⚙️ API配置（必填）</div>
+            <div class="input-group">
+                <label>API地址</label>
+                <input type="text" id="apiUrl" placeholder="https://px5r5j8mt8.coze.site/run">
+            </div>
+            <div class="input-group">
+                <label>Token（Authorization Token）</label>
+                <input type="password" id="token" placeholder="请输入您的Token（以eyJ开头）">
+            </div>
+            <div class="input-group">
+                <label>导出路径（可选）</label>
+                <input type="text" id="exportPath" placeholder="/tmp/product_images_export">
+                <div class="hint">留空则不导出，仅返回URL</div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-primary" id="generateBtn" onclick="generateImages()">
+                <span>🚀</span> 生成图片
+            </button>
+            <button class="btn btn-secondary" id="downloadBtn" onclick="downloadAll()" disabled>
+                <span>📥</span> 导出所有图片
+            </button>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div id="results" class="results"></div>
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        let uploadedImages = [null, null];
+        let selectedStyle = '智能自适应';
+        let generatedImages = [];
+
+        function handleFileSelect(event, uploadId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const uploadBox = document.getElementById(uploadId);
+                uploadBox.innerHTML = `<img src="${e.target.result}" alt="Uploaded">`;
+                uploadBox.classList.add('has-image');
+
+                if (uploadId === 'upload1') {
+                    uploadedImages[0] = e.target.result;
+                } else {
+                    uploadedImages[1] = e.target.result;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function selectStyle(element) {
+            document.querySelectorAll('.style-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedStyle = element.dataset.style;
+        }
+
+        async function generateImages() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const token = document.getElementById('token').value.trim();
+            const exportPath = document.getElementById('exportPath').value.trim();
+
+            // 验证输入
+            if (!uploadedImages[0] || !uploadedImages[1]) {
+                showError('请先上传2张产品图片');
+                return;
+            }
+
+            if (!apiUrl) {
+                showError('请输入API地址');
+                return;
+            }
+
+            if (!token) {
+                showError('请输入Token');
+                return;
+            }
+
+            const errorDiv = document.getElementById('error');
+            errorDiv.style.display = 'none';
+
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar');
+            progress.style.display = 'block';
+            progressBar.style.width = '10%';
+            progressBar.textContent = '正在生成...';
+
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        image1: uploadedImages[0],
+                        image2: uploadedImages[1],
+                        style: selectedStyle,
+                        export_path: exportPath
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                progressBar.style.width = '100%';
+                progressBar.textContent = '完成！';
+
+                if (data.images && data.images.length > 0) {
+                    displayResults(data.images);
+                    document.getElementById('downloadBtn').disabled = false;
+                } else {
+                    throw new Error('未返回生成的图片');
+                }
+            } catch (error) {
+                showError(`生成失败：${error.message}。如果是CORS跨域错误，请使用方案2或方案3。`);
+                progressBar.style.width = '0%';
+                progress.style.display = 'none';
+            }
+
+            generateBtn.disabled = false;
+        }
+
+        function displayResults(images) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            const labels = ['主图', '风格1', '风格2', '风格3', '风格4', '风格5', '风格6', '风格7', '风格8', '详情页'];
+
+            images.forEach((img, index) => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <img src="${img}" alt="Generated ${index + 1}">
+                    <div class="label">${labels[index]}</div>
+                `;
+                resultsDiv.appendChild(item);
+            });
+
+            generatedImages = images;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function downloadAll() {
+            generatedImages.forEach((img, index) => {
+                const link = document.createElement('a');
+                link.href = img;
+                link.download = `product_image_${index + 1}.png`;
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

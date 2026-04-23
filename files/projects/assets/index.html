@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产品图片生成器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🎨 AI产品图片生成器</h1>
+            <p class="subtitle">智能识别风格 · 超高清生成 · 一键导出</p>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="upload-section">
+            <h2>上传产品图片</h2>
+            <div class="upload-grid">
+                <div class="upload-box" id="upload1">
+                    <input type="file" id="file1" accept="image/*" hidden>
+                    <div class="upload-placeholder" onclick="document.getElementById('file1').click()">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">点击上传图片1</span>
+                    </div>
+                    <div class="preview-container" id="preview1" style="display: none;">
+                        <img id="preview-img1" class="preview-image">
+                        <button class="remove-btn" onclick="removeImage(1)">✕</button>
+                    </div>
+                </div>
+
+                <div class="upload-box" id="upload2">
+                    <input type="file" id="file2" accept="image/*" hidden>
+                    <div class="upload-placeholder" onclick="document.getElementById('file2').click()">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">点击上传图片2</span>
+                    </div>
+                    <div class="preview-container" id="preview2" style="display: none;">
+                        <img id="preview-img2" class="preview-image">
+                        <button class="remove-btn" onclick="removeImage(2)">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 风格选择 -->
+        <div class="style-section">
+            <h2>选择风格</h2>
+            <div class="style-options">
+                <label class="style-option">
+                    <input type="radio" name="style" value="adaptive" checked>
+                    <span class="style-icon">🤖</span>
+                    <div class="style-info">
+                        <span class="style-name">智能自适应</span>
+                        <span class="style-desc">AI自动分析并选择最佳风格</span>
+                    </div>
+                </label>
+
+                <label class="style-option">
+                    <input type="radio" name="style" value="warm">
+                    <span class="style-icon">🔥</span>
+                    <div class="style-info">
+                        <span class="style-name">暖色系</span>
+                        <span class="style-desc">温馨舒适，Z世代最爱</span>
+                    </div>
+                </label>
+
+                <label class="style-option">
+                    <input type="radio" name="style" value="cool">
+                    <span class="style-icon">❄️</span>
+                    <div class="style-info">
+                        <span class="style-name">冷色系</span>
+                        <span class="style-desc">现代清新，高级冷淡风</span>
+                    </div>
+                </label>
+
+                <label class="style-option">
+                    <input type="radio" name="style" value="neutral">
+                    <span class="style-icon">⚪</span>
+                    <div class="style-info">
+                        <span class="style-name">中性色</span>
+                        <span class="style-desc">高端百搭，极简专业</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- 导出路径 -->
+        <div class="export-section">
+            <h2>导出路径（可选）</h2>
+            <div class="input-group">
+                <input type="text" id="exportPath" placeholder="/tmp/product_images_export">
+                <span class="input-hint">留空则不导出，仅返回URL</span>
+            </div>
+        </div>
+
+        <!-- 生成按钮 -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="generateBtn" onclick="generateImages()">
+                <span class="btn-icon">🎨</span>
+                <span class="btn-text">生成图片</span>
+            </button>
+            <button class="btn btn-secondary" id="regenerateBtn" onclick="regenerateImages()" disabled>
+                <span class="btn-icon">🔄</span>
+                <span class="btn-text">重新生成</span>
+            </button>
+        </div>
+
+        <!-- 加载状态 -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p class="loading-text">正在生成图片，请稍候...</p>
+            <p class="loading-detail" id="loadingDetail">正在分析产品风格...</p>
+        </div>
+
+        <!-- 检测结果 -->
+        <div class="detection-result" id="detectionResult" style="display: none;">
+            <h3>🔍 智能检测结果</h3>
+            <div class="result-grid">
+                <div class="result-item">
+                    <span class="result-label">检测风格：</span>
+                    <span class="result-value" id="detectedStyle">neutral</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">产品类型：</span>
+                    <span class="result-value" id="productType">服装（连衣裙）</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">主要色调：</span>
+                    <span class="result-value" id="colorTone">中性色调</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 生成结果 -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="section-header">
+                <h2>生成结果</h2>
+                <button class="btn btn-export" onclick="exportImages()" id="exportBtn">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">导出所有图片</span>
+                </button>
+            </div>
+
+            <div class="results-grid">
+                <!-- 主图 -->
+                <div class="result-card main-image">
+                    <div class="result-header">
+                        <span class="result-tag">主图</span>
+                        <span class="result-size">2700×3600px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="mainImage" src="" alt="主图">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('mainImage', 'main_image.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 风格图 -->
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 1</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage1" src="" alt="风格图1">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage1', 'style_image_1.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 2</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage2" src="" alt="风格图2">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage2', 'style_image_2.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 3</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage3" src="" alt="风格图3">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage3', 'style_image_3.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 4</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage4" src="" alt="风格图4">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage4', 'style_image_4.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 5</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage5" src="" alt="风格图5">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage5', 'style_image_5.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 6</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage6" src="" alt="风格图6">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage6', 'style_image_6.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 7</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage7" src="" alt="风格图7">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage7', 'style_image_7.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-card style-image">
+                    <div class="result-header">
+                        <span class="result-tag">风格图 8</span>
+                        <span class="result-size">3200×3200px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="styleImage8" src="" alt="风格图8">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('styleImage8', 'style_image_8.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 详情页 -->
+                <div class="result-card detail-page">
+                    <div class="result-header">
+                        <span class="result-tag">详情页</span>
+                        <span class="result-size">2700×3600px</span>
+                    </div>
+                    <div class="result-image">
+                        <img id="detailPage" src="" alt="详情页">
+                    </div>
+                    <div class="result-footer">
+                        <button class="btn-download" onclick="downloadImage('detailPage', 'detail_page.jpg')">
+                            <span>📥</span> 下载
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Token配置 -->
+        <div class="config-section">
+            <h2>⚙️ API配置</h2>
+            <div class="input-group">
+                <input type="password" id="apiToken" placeholder="请输入API Token">
+                <span class="input-hint">从Coze平台获取你的API Token</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="apiUrl" value="https://px5r5j8mt8.coze.site/run" readonly>
+                <span class="input-hint">API地址（只读）</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

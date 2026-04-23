@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI产品图片生成工具 - 一键分享</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .option-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .option-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .option-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .option-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .option-features {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .feature {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .step {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .step-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            display: inline;
+        }
+
+        .step-content {
+            margin-top: 8px;
+            padding-left: 36px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .step-content code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+        }
+
+        .alert-text {
+            color: #0c5460;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .option {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 AI产品图片生成工具</h1>
+            <p>一键分享给朋友使用</p>
+        </div>
+
+        <div class="content">
+            <!-- 选择分享方式 -->
+            <div class="section">
+                <h2>选择分享方式</h2>
+
+                <div class="option" onclick="scrollToSection('method1')">
+                    <div class="option-header">
+                        <span class="option-title">方式1：HTML文件分享（最简单）</span>
+                        <span class="option-badge">推荐</span>
+                    </div>
+                    <div class="option-desc">下载HTML文件，直接发送给朋友，无需服务器</div>
+                    <div class="option-features">
+                        <span class="feature">最简单</span>
+                        <span class="feature">即传即用</span>
+                        <span class="feature">无需配置</span>
+                    </div>
+                </div>
+
+                <div class="option" onclick="scrollToSection('method2')">
+                    <div class="option-header">
+                        <span class="option-title">方式2：GitHub Pages分享</span>
+                        <span class="option-badge">免费</span>
+                    </div>
+                    <div class="option-desc">部署到GitHub Pages，获得永久在线的网站链接</div>
+                    <div class="option-features">
+                        <span class="feature">免费托管</span>
+                        <span class="feature">永久在线</span>
+                        <span class="feature">自定义域名</span>
+                    </div>
+                </div>
+
+                <div class="option" onclick="scrollToSection('method3')">
+                    <div class="option-header">
+                        <span class="option-title">方式3：直接使用现有文件</span>
+                        <span class="option-badge">快速</span>
+                    </div>
+                    <div class="option-desc">直接使用项目中的HTML文件，无需下载</div>
+                    <div class="option-features">
+                        <span class="feature">无需下载</span>
+                        <span class="feature">即开即用</span>
+                        <span class="feature">本地运行</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方法1：HTML文件分享 -->
+            <div class="section" id="method1">
+                <h2>📥 方式1：HTML文件分享（最简单）</h2>
+
+                <div class="step">
+                    <div><span class="step-number">1</span><span class="step-title">下载HTML文件</span></div>
+                    <div class="step-content">
+                        <a href="/download" class="btn" style="padding: 8px 20px; font-size: 14px;">
+                            📥 点击下载HTML文件
+                        </a>
+                        <p style="margin-top: 8px;">下载完成后，你会得到一个HTML文件</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">2</span><span class="step-title">发送给朋友</span></div>
+                    <div class="step-content">
+                        通过以下方式发送HTML文件：
+                        <ul>
+                            <li>微信/QQ文件传输</li>
+                            <li>邮件附件</li>
+                            <li>云盘分享（百度网盘、阿里云盘等）</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">3</span><span class="step-title">朋友使用</span></div>
+                    <div class="step-content">
+                        朋友双击HTML文件即可使用，需要配置API地址和Token
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-text">
+                        <strong>💡 提示：</strong>可以创建一个简单的文本文件"使用说明.txt"一起发送，告诉朋友如何获取API地址和Token
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方法2：GitHub Pages分享 -->
+            <div class="section" id="method2">
+                <h2>🌐 方式2：GitHub Pages分享（免费）</h2>
+
+                <div class="step">
+                    <div><span class="step-number">1</span><span class="step-title">使用部署脚本</span></div>
+                    <div class="step-content">
+                        在项目根目录执行：
+                        <br><br>
+                        <code>bash scripts/deploy_to_github_pages.sh</code>
+                        <br><br>
+                        按照提示输入GitHub用户名和仓库名称
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">2</span><span class="step-title">推送到GitHub</span></div>
+                    <div class="step-content">
+                        脚本会自动推送代码到GitHub，如果需要认证，请按提示操作
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">3</span><span class="step-title">启用GitHub Pages</span></div>
+                    <div class="step-content">
+                        <ol>
+                            <li>访问GitHub仓库页面</li>
+                            <li>点击"Settings"</li>
+                            <li>在左侧菜单找到"Pages"</li>
+                            <li>在"Build and deployment"下选择"Deploy from a branch"</li>
+                            <li>选择"main"分支，目录"/(root)"</li>
+                            <li>点击"Save"</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">4</span><span class="step-title">获取分享链接</span></div>
+                    <div class="step-content">
+                        等待1-2分钟后，访问：<br><br>
+                        <code>https://你的用户名.github.io/仓库名/</code><br><br>
+                        将这个链接分享给朋友
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方法3：直接使用现有文件 -->
+            <div class="section" id="method3">
+                <h2>⚡ 方式3：直接使用现有文件</h2>
+
+                <div class="step">
+                    <div><span class="step-number">1</span><span class="step-title">找到HTML文件</span></div>
+                    <div class="step-content">
+                        项目中已经包含完整的HTML文件：<br><br>
+                        <code>assets/web_sdk_index.html</code><br><br>
+                        直接双击打开即可使用
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">2</span><span class="step-title">复制文件</span></div>
+                    <div class="step-content">
+                        将<code>assets/web_sdk_index.html</code>文件复制到任何位置，发送给朋友
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div><span class="step-number">3</span><span class="step-title">朋友使用</span></div>
+                    <div class="step-content">
+                        朋友双击文件，配置API后即可使用
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-text">
+                        <strong>💡 提示：</strong>这是最快的方式，不需要下载任何文件，直接使用项目中的HTML文件
+                    </div>
+                </div>
+            </div>
+
+            <!-- API获取说明 -->
+            <div class="section">
+                <h2>🔑 如何获取API地址和Token</h2>
+
+                <div class="step">
+                    <div class="step-title">获取步骤</div>
+                    <div class="step-content">
+                        <ol>
+                            <li>打开Coze平台工作流页面</li>
+                            <li>点击右上角"查看接入方式"</li>
+                            <li>复制API地址（如：https://api.coze.com/v1/workflow/run）</li>
+                            <li>复制API Token（如：pat_xxxxx）</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-text">
+                        <strong>⚠️ 重要：</strong>API Token请妥善保管，不要泄露给不信任的人。分享给朋友时，可以告诉他们如何获取自己的Token。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速开始按钮 -->
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="/download" class="btn" style="font-size: 18px; padding: 16px 48px;">
+                    📥 立即下载HTML文件
+                </a>
+                <p style="margin-top: 16px; color: #666;">
+                    或者选择上方的其他分享方式
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>AI产品图片生成工具 - 让产品图片生成变得简单</p>
+        </div>
+    </div>
+
+    <script>
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 页面加载时显示提示
+        window.onload = function() {
+            console.log('AI产品图片生成工具 - 一键分享页面');
+        };
+    </script>
+</body>
+</html>

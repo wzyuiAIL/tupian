@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API调试工具 - 产品图片生成</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        h2 {
+            color: #555;
+            margin: 30px 0 20px 0;
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .log-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .log-entry.info {
+            background: #2d2d2d;
+            border-left: 3px solid #2196F3;
+        }
+
+        .log-entry.success {
+            background: #2d2d2d;
+            border-left: 3px solid #4caf50;
+        }
+
+        .log-entry.error {
+            background: #2d2d2d;
+            border-left: 3px solid #f44336;
+        }
+
+        .log-entry.warning {
+            background: #2d2d2d;
+            border-left: 3px solid #ff9800;
+        }
+
+        .test-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .test-status.pass {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .test-status.fail {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .test-status.wait {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API调试工具</h1>
+
+        <div class="info-box">
+            <strong>💡 使用说明：</strong>此工具用于诊断API调用问题，请按照步骤操作并查看日志输出。
+        </div>
+
+        <h2>1️⃣ API配置</h2>
+
+        <div class="form-group">
+            <label>API地址（从Coze平台"查看接入方式"获取）</label>
+            <input type="text" id="apiUrl" placeholder="https://px5r5j8mt8.coze.site/run">
+            <div class="warning-box">
+                ⚠️ 注意：API地址应该以 <code>/run</code> 结尾，例如：<code>https://px5r5j8mt8.coze.site/run</code>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>API Token（从Coze平台"查看接入方式"获取）</label>
+            <input type="text" id="apiToken" type="password" placeholder="pat_v2_xxxxxxxxxxxxxx 或 eyJhbGciOiJSUzI1NiIsImtpZCI6...">
+            <div class="warning-box">
+                ⚠️ 注意：Token应该以 <code>pat_v2_</code> 开头（PAT格式）或 <code>eyJ</code> 开头（JWT格式），完整复制，不要有多余空格
+            </div>
+        </div>
+
+        <h2>2️⃣ 调试测试</h2>
+
+        <div class="info-box">
+            <strong>📋 测试步骤：</strong>
+            <ol>
+                <li>点击"测试1：验证配置"检查API配置是否正确</li>
+                <li>点击"测试2：测试连接"检查能否连接到API服务器</li>
+                <li>点击"测试3：完整测试"模拟完整的API调用流程</li>
+            </ol>
+        </div>
+
+        <div>
+            <button onclick="testConfig()">测试1：验证配置</button>
+            <button onclick="testConnection()" class="secondary">测试2：测试连接</button>
+            <button onclick="testFullApi()" class="secondary">测试3：完整测试</button>
+        </div>
+
+        <h2>3️⃣ 调试日志</h2>
+
+        <div class="error-box" id="errorBox"></div>
+        <div class="success-box" id="successBox"></div>
+
+        <div class="log-area" id="logArea">
+            <div class="log-entry info">📝 等待开始测试...</div>
+        </div>
+
+        <h2>4️⃣ 常见问题</h2>
+
+        <div class="info-box">
+            <strong>❓ 如果出现"Failed to fetch"错误：</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>检查API地址是否正确（包含https://和/run）</li>
+                <li>检查Token是否正确（包含pat_v2_或eyJ前缀）</li>
+                <li>检查网络连接</li>
+                <li>检查浏览器控制台是否有CORS错误</li>
+                <li>尝试使用不同的浏览器（Chrome/Edge）</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+            logCount++;
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successBox = document.getElementById('successBox');
+            successBox.textContent = message;
+            successBox.style.display = 'block';
+        }
+
+        function clearMessages() {
+            document.getElementById('errorBox').style.display = 'none';
+            document.getElementById('successBox').style.display = 'none';
+        }
+
+        // 测试1：验证配置
+        function testConfig() {
+            clearMessages();
+            log('开始测试1：验证配置...', 'info');
+
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiToken = document.getElementById('apiToken').value.trim();
+
+            log(`API地址: ${apiUrl || '未填写'}`, 'info');
+            log(`Token长度: ${apiToken ? apiToken.length : 0} 字符`, 'info');
+
+            if (!apiUrl) {
+                log('❌ 错误：API地址未填写', 'error');
+                showError('❌ 请输入API地址');
+                return 'fail';
+            }
+
+            if (!apiUrl.startsWith('https://')) {
+                log('❌ 错误：API地址必须以https://开头', 'error');
+                showError('❌ API地址必须以https://开头');
+                return 'fail';
+            }
+
+            if (!apiUrl.endsWith('/run')) {
+                log('⚠️ 警告：API地址应该以/run结尾', 'warning');
+                showError('⚠️ API地址建议以/run结尾');
+                return 'fail';
+            }
+
+            if (!apiToken) {
+                log('❌ 错误：Token未填写', 'error');
+                showError('❌ 请输入API Token');
+                return 'fail';
+            }
+
+            // 支持两种Token格式：PAT格式（pat_v2_开头）和JWT格式（eyJ开头）
+            if (!apiToken.startsWith('pat_v2_') && !apiToken.startsWith('eyJ')) {
+                log('⚠️ 警告：Token格式不正确，应该是pat_v2_或eyJ开头', 'warning');
+                showError('⚠️ Token格式不正确，应该以pat_v2_或eyJ开头');
+                return 'fail';
+            }
+
+            // 根据Token类型显示不同的提示
+            if (apiToken.startsWith('pat_v2_')) {
+                log('Token类型: PAT格式（Personal Access Token）', 'info');
+            } else if (apiToken.startsWith('eyJ')) {
+                log('Token类型: JWT格式（JSON Web Token）', 'info');
+            }
+
+            if (apiToken.length < 20) {
+                log('❌ 错误：Token长度不正确', 'error');
+                showError('❌ Token长度不正确');
+                return 'fail';
+            }
+
+            log('✅ 配置验证通过！', 'success');
+            showSuccess('✅ 配置验证通过！可以进行下一步测试。');
+            return 'pass';
+        }
+
+        // 测试2：测试连接
+        async function testConnection() {
+            if (testConfig() === 'fail') {
+                return;
+            }
+
+            log('开始测试2：测试连接...', 'info');
+
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiToken = document.getElementById('apiToken').value.trim();
+
+            try {
+                log(`发送请求到: ${apiUrl}`, 'info');
+                log(`请求头: Authorization: Bearer ${apiToken.substring(0, 20)}...`, 'info');
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({
+                        test: true
+                    })
+                });
+
+                log(`响应状态码: ${response.status}`, response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const text = await response.text();
+                    log(`响应内容: ${text.substring(0, 200)}...`, 'success');
+                    log('✅ 连接成功！API服务器可以访问。', 'success');
+                    showSuccess('✅ 连接成功！可以进行完整测试。');
+                } else {
+                    const text = await response.text();
+                    log(`响应内容: ${text}`, 'error');
+                    log('❌ 连接失败，请检查API配置。', 'error');
+                    showError(`❌ 连接失败：${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`, 'error');
+                log(`错误类型: ${error.name}`, 'error');
+                showError(`❌ 连接失败：${error.message}`);
+
+                if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                    log('\n🔍 可能的原因：', 'warning');
+                    log('1. API地址不正确', 'warning');
+                    log('2. 网络连接问题', 'warning');
+                    log('3. CORS跨域限制（浏览器阻止了请求）', 'warning');
+                    log('4. Token不正确', 'warning');
+                }
+            }
+        }
+
+        // 测试3：完整测试
+        async function testFullApi() {
+            if (testConfig() === 'fail') {
+                return;
+            }
+
+            log('开始测试3：完整测试...', 'info');
+
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const apiToken = document.getElementById('apiToken').value.trim();
+
+            // 构建测试payload
+            const payload = {
+                product_image1: {
+                    url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                    file_type: "image"
+                },
+                product_image2: {
+                    url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                    file_type: "image"
+                },
+                style: "adaptive"
+            };
+
+            try {
+                log(`发送请求到: ${apiUrl}`, 'info');
+                log(`请求体大小: ${JSON.stringify(payload).length} 字节`, 'info');
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                log(`响应状态码: ${response.status}`, response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const result = await response.json();
+                    log('✅ API调用成功！', 'success');
+                    log(`返回数据: ${JSON.stringify(result, null, 2)}`, 'success');
+                    showSuccess('✅ API调用成功！配置正确，可以使用。');
+                } else {
+                    const text = await response.text();
+                    log(`响应内容: ${text}`, 'error');
+                    log('❌ API调用失败', 'error');
+                    showError(`❌ API调用失败：${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`, 'error');
+                log(`错误类型: ${error.name}`, 'error');
+                showError(`❌ API调用失败：${error.message}`);
+
+                if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                    log('\n🔍 "Failed to fetch" 错误的详细诊断：', 'warning');
+                    log('1. 可能是CORS跨域限制', 'warning');
+                    log('2. 检查浏览器控制台（F12）查看详细错误', 'warning');
+                    log('3. 尝试使用其他API地址格式', 'warning');
+                }
+            }
+        }
+
+        // 页面加载时清空日志
+        window.onload = function() {
+            document.getElementById('logArea').innerHTML = '<div class="log-entry info">📝 等待开始测试...</div>';
+        };
+    </script>
+</body>
+</html>
