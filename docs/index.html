@@ -575,7 +575,7 @@
                     <input type="text" id="exportPath" placeholder="未选择本地导出文件夹" readonly>
                     <button class="btn btn-secondary" type="button" onclick="chooseExportFolder()">📁 选择文件夹</button>
                 </div>
-                <span class="input-hint">生成后可一键保存到本地文件夹；不选择也可以逐张下载</span>
+                <span class="input-hint">建议先新建一个空文件夹再选择；浏览器不允许选择桌面、下载根目录等包含系统文件的目录</span>
                 <div class="export-selected" id="exportSelected" style="display: none;"></div>
             </div>
         </div>
@@ -726,7 +726,7 @@
                 showMessage('已选择本地导出文件夹，生成后可一键保存。', 'success');
             } catch (error) {
                 if (error.name !== 'AbortError') {
-                    showMessage(`选择文件夹失败：${error.message}`, 'error');
+                    showMessage('无法打开这个文件夹。请先新建一个普通空文件夹，例如“AI图片导出”，然后选择它。', 'error');
                 }
             }
         }
