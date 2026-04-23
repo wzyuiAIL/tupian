@@ -204,6 +204,9 @@ async def health() -> dict[str, str]:
 
 
 @app.post("/coze/jobs")
+@app.post("/api/jobs")
+@app.post("/api/")
+@app.post("/api")
 async def create_job(request: Request):
     await cleanup_jobs()
     raw_body = await request.body()
@@ -238,6 +241,7 @@ async def create_job(request: Request):
 
 
 @app.get("/coze/jobs/{job_id}")
+@app.get("/api/jobs/{job_id}")
 async def get_job(job_id: str):
     async with JOBS_LOCK:
         job = JOBS.get(job_id)
@@ -247,6 +251,7 @@ async def get_job(job_id: str):
 
 
 @app.post("/coze/run")
+@app.post("/api/run")
 async def run_coze_legacy(request: Request):
     created = await create_job(request)
     job_id = created["job_id"]

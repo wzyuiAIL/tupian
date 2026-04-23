@@ -480,7 +480,7 @@
         <div class="api-section">
             <h2>⚙️ API配置（必填）</h2>
             <div class="input-group">
-                <input type="text" id="apiUrl" placeholder="/coze/run" value="/coze/run">
+                <input type="text" id="apiUrl" placeholder="/api/" value="/api/">
                 <span class="input-hint">VPS 同源代理地址，Token 已由服务器统一管理</span>
             </div>
             <div class="input-group" style="display: none;">
@@ -774,9 +774,15 @@
         }
 
         function getJobsApiUrl() {
-            const apiUrl = CONFIG.apiUrl || '/coze/run';
+            const apiUrl = (CONFIG.apiUrl || '/coze/run').replace(/\/+$/, '');
             if (apiUrl.endsWith('/coze/run')) {
                 return apiUrl.replace(/\/coze\/run$/, '/coze/jobs');
+            }
+            if (apiUrl.endsWith('/api')) {
+                return `${apiUrl}/jobs`;
+            }
+            if (apiUrl.endsWith('/api/run')) {
+                return apiUrl.replace(/\/api\/run$/, '/api/jobs');
             }
             if (apiUrl.endsWith('/run')) {
                 return apiUrl.replace(/\/run$/, '/jobs');
