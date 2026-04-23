@@ -441,18 +441,18 @@
         <div class="api-section">
             <h2>⚙️ API配置（必填）</h2>
             <div class="input-group">
-                <input type="text" id="apiUrl" placeholder="https://corsproxy.io/?https://px5r5j8mt8.coze.site/run" value="https://corsproxy.io/?https://px5r5j8mt8.coze.site/run">
-                <span class="input-hint">GitHub Pages 零安装模式：默认使用在线 CORS 代理</span>
+                <input type="text" id="apiUrl" placeholder="https://166.88.186.3.sslip.io/coze/run" value="https://166.88.186.3.sslip.io/coze/run">
+                <span class="input-hint">VPS 代理地址，Token 已由服务器统一管理</span>
             </div>
-            <div class="input-group">
-                <input type="password" id="apiToken" placeholder="请输入API Token">
-                <span class="input-hint">从Coze工作流部署页面获取API Token</span>
+            <div class="input-group" style="display: none;">
+                <input type="password" id="apiToken" placeholder="">
+                <span class="input-hint">Token 已由 VPS 代理统一管理</span>
             </div>
             <div style="margin-top: 15px; padding: 15px; background: #e8f5e9; border-radius: 8px; font-size: 0.9em;">
                 <strong>如何获取API：</strong><br>
                 1. 打开Coze平台的"无水印产品图工作流"<br>
                 2. 点击右上角的"查看接入方式"<br>
-                3. 复制API地址和Token到上方输入框
+                3. Token 已保存在 VPS，上方只需要填写 VPS 代理地址
             </div>
         </div>
 
@@ -594,8 +594,7 @@
     <script>
         // 配置
         let CONFIG = {
-            apiUrl: '',
-            apiToken: ''
+            apiUrl: ''
         };
 
         // 上传的文件
@@ -607,10 +606,9 @@
         // API配置检查
         function checkApiConfig() {
             const apiUrl = document.getElementById('apiUrl').value;
-            const apiToken = document.getElementById('apiToken').value;
             const warning = document.getElementById('apiWarning');
 
-            if (apiUrl && apiToken) {
+            if (apiUrl) {
                 warning.style.display = 'none';
             } else {
                 warning.style.display = 'block';
@@ -619,7 +617,6 @@
 
         // 监听API输入
         document.getElementById('apiUrl').addEventListener('input', checkApiConfig);
-        document.getElementById('apiToken').addEventListener('input', checkApiConfig);
 
         // 页面加载时检查
         window.onload = function() {
@@ -662,7 +659,6 @@
         // 生成图片
         async function generateImages() {
             CONFIG.apiUrl = document.getElementById('apiUrl').value;
-            CONFIG.apiToken = document.getElementById('apiToken').value;
             const style = document.querySelector('input[name="style"]:checked').value;
             const exportPath = document.getElementById('exportPath').value;
 
@@ -674,11 +670,6 @@
 
             if (!CONFIG.apiUrl) {
                 showMessage('请输入工作流API地址', 'error');
-                return;
-            }
-
-            if (!CONFIG.apiToken) {
-                showMessage('请输入API Token', 'error');
                 return;
             }
 
@@ -716,8 +707,7 @@
                 const response = await fetch(CONFIG.apiUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${CONFIG.apiToken}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
@@ -745,7 +735,7 @@
                     // 检查浏览器控制台
                     console.error('🔍 详细诊断信息:');
                     console.error('1. API地址:', CONFIG.apiUrl);
-                    console.error('2. Token前20位:', CONFIG.apiToken ? CONFIG.apiToken.substring(0, 20) + '...' : '未配置');
+                    console.error('2. Token由VPS代理管理，前端不再发送Token');
                     console.error('3. 错误类型:', error.name);
                     console.error('4. 错误信息:', error.message);
 
@@ -883,14 +873,11 @@
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const apiUrl = urlParams.get('api_url');
-            const apiToken = urlParams.get('api_token');
             
             if (apiUrl) {
                 document.getElementById('apiUrl').value = apiUrl;
             }
-            if (apiToken) {
-                document.getElementById('apiToken').value = apiToken;
-            }
+            checkApiConfig();
         };
     </script>
 </body>

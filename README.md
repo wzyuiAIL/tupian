@@ -18,6 +18,13 @@ docs/
 GITHUB_PAGES_SETUP.md
 ```
 
+如果要让同事不安装 Python，并且不暴露 Coze Token，推荐使用 Debian VPS 代理：
+
+```text
+VPS_DEPLOYMENT_PLAN.md
+vps-proxy/README.md
+```
+
 ## 添加文件
 
 把你要分享的文件放到 `files` 文件夹里。

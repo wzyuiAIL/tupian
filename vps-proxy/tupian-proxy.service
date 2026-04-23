@@ -1,0 +1,16 @@
+[Unit]
+Description=tupian Coze proxy
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tupian-proxy
+EnvironmentFile=/etc/tupian-proxy.env
+ExecStart=/opt/tupian-proxy/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8787 --timeout-keep-alive 650
+Restart=always
+RestartSec=5
+User=tupian
+Group=tupian
+
+[Install]
+WantedBy=multi-user.target

@@ -58,13 +58,15 @@ https://你的用户名.github.io/tupian/
 3. 填写 API 地址和 Token。
 4. 点击生成图片。
 
-如果页面提示 `Failed to fetch`，通常是 CORS 跨域问题。解决方式：
+如果页面提示 `Failed to fetch`，通常是 CORS 跨域或代理超时问题。当前推荐的稳定方案是使用 Debian VPS 部署专用代理，见：
 
-- 临时方案：使用在线 CORS 代理地址。
-- 稳定方案：把代理部署到服务器或云函数，然后让页面调用这个代理地址。
+```text
+VPS_DEPLOYMENT_PLAN.md
+vps-proxy/README.md
+```
 
 ## 重要结论
 
 GitHub Pages 只能托管静态网页，不能运行 Python 后端。
 
-所以这个方案下，同事电脑不需要 Python；但 API 跨域代理必须使用在线代理、云函数、服务器，或者由 API 服务本身允许跨域访问。
+所以这个方案下，同事电脑不需要 Python；Coze Token 和跨域请求由 VPS 代理处理。
